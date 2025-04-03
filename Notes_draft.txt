@@ -1,0 +1,216 @@
+CREATE TABLE IF NOT EXISTS Performer (
+		id_performer SERIAL PRIMARY KEY, 
+		name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Genres (
+		id_genres SERIAL PRIMARY KEY, 
+		name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Album (
+		id_album SERIAL PRIMARY KEY, 
+		name VARCHAR(255) NOT null,
+		year_of_release date not null check (year_of_release::date > '1999-12-31')
+);
+
+CREATE TABLE IF NOT EXISTS Track (
+	  id_track SERIAL PRIMARY KEY, 
+	  name VARCHAR(255) NOT null,
+	  length INT  not null check (length > 100),
+	  id_album INT NOT null,
+	  FOREIGN KEY(id_album)	REFERENCES album(id_album)	ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS Collection (
+	  id_collection SERIAL PRIMARY KEY, 
+	  name VARCHAR(255) NOT null,
+	  year_of_release date not null check (year_of_release::date > '1999-12-31')
+) ;
+
+CREATE TABLE IF NOT EXISTS S_Perfomer_Genres (
+		id_perfomer_genres SERIAL PRIMARY KEY, 
+		id_performer INT NOT null,
+		id_genres INT NOT null,
+	  
+		FOREIGN KEY(id_performer)	REFERENCES performer(id_performer)	ON DELETE CASCADE,
+		FOREIGN KEY(id_genres)	REFERENCES Genres(id_genres)	ON DELETE CASCADE
+) ;
+
+CREATE TABLE IF NOT EXISTS S_Performer_Album (
+		id_Perfomer_Album SERIAL PRIMARY KEY, 
+		id_performer INT NOT null,
+		id_album INT NOT null,
+	  
+		FOREIGN KEY(id_performer)	REFERENCES performer(id_performer)	ON DELETE CASCADE,
+		FOREIGN KEY(id_album)	REFERENCES Album(id_album)	ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS S_Collection_Track (
+	  	id_collection_track SERIAL PRIMARY KEY, 
+	  	id_collection INT NOT null,
+	  	id_track INT NOT null,
+	  	
+		FOREIGN KEY(id_collection)	REFERENCES Collection(id_collection)	ON DELETE CASCADE,
+		FOREIGN KEY(id_track)	REFERENCES Track(id_track)	ON DELETE CASCADE
+);
+
+
+
+-- /* Вставка значений
+
+INSERT INTO Performer (name) 
+VALUES ('Баста'), ('Ария'), ('Король и Шут'), ('Ленинград'), ('Бах');
+
+INSERT INTO Genres (name) 
+VALUES ('Рок'), ('Рэп'), ('Попса'), ('Класика');
+
+INSERT INTO Album (name,year_of_release) 
+VALUES ('Альбом 1','2021-01-01'),('Альбом 2','2022-01-01'),('Альбом 3','2001-01-01'),('Альбом 4','2004-10-01'),('Альбом 5','2005-10-01'),('Альбом 6','2000-10-01'),('Альбом 7','2020-10-01');
+
+INSERT INTO Track (name,length,id_album) 
+VALUES ('Свобода',250,1),('Свобода-2',300,2),('Лесник',160,3),('Колизей',300,4),('WWW',200,5),('Что то там ...',700,6),('my hard',550,6),('Мой мир',280,5);
+
+INSERT INTO collection (name,year_of_release) 
+VALUES ('Сборник-1','2017-01-01'),('Сборник-2','2018-01-01'),('Сборник-3','2019-01-01'),('Сборник-4','2020-03-01'),('Сборник-5','2021-03-01'),('Сборник-6','2022-03-01'),('Сборник-7','2023-03-01');
+
+INSERT INTO S_Perfomer_Genres (id_performer,id_genres) 
+VALUES (1,2), (2,1), (3,1), (4,1), (5,4),(5,3);
+
+INSERT INTO S_Performer_Album (id_performer,id_album)
+VALUES (1,1), (1,2), (3,3), (2,4), (4,5),(5,6),(2,7);
+
+INSERT INTO S_Collection_Track (id_collection, id_track) 
+VALUES (1,1), (1,2), (1,3), (2,4), (2,5),(2,6),(3,2),(3,5),(3,1),(4,6),(4,4);
+
+-- */ Вставка значений
+
+
+
+
+-- /*Проверка исключений
+INSERT INTO Album (name,year_of_release) 
+values ('Баста 2','1999-12-31');					--Год выпуска альбома > 1999-12-31 
+
+INSERT INTO collection (name,year_of_release) 	
+VALUES ('Сборник-1','2021-01-01'),('Сборник-2','1999-12-31');		--Год выпуска сборника > 1999-12-31 
+
+INSERT INTO Track (name,length,id_album) 
+VALUES ('Свобода',239,6);						--длина трека > 150
+-- */Проверка исключений
+
+
+
+DELETE FROM Performer WHERE id_performer = 1;		-- ОР в таблицах: Performer, ОР S_Perfomer_Genres, S_Performer_Album - удаляются строки со значением id_performer = заданному значению 
+DELETE FROM Genres WHERE id_genres = 1;			-- ОР в таблицах: Genres, S_Perfomer_Genres - удаляются строки со значением id_genres = заданному значению 
+DELETE FROM album  WHERE id_album = 1;	
+
+
+
+
+UPDATE Performer 
+SET name = 'Король и Шут'
+WHERE id_performer = 3
+
+
+
+
+
+
+SELECT * FROM Performer;
+SELECT * FROM Genres;
+SELECT * FROM album;
+SELECT * FROM Track;
+SELECT * FROM Collection;
+SELECT * FROM S_Perfomer_genres;
+SELECT * FROM S_Performer_album;
+SELECT * FROM S_Collection_track;
+
+
+--	ЗАДАНИЕ 2
+
+-- 1) Название и продолжительность самого длительного трека.
+SELECT name, length  FROM Track
+WHERE length = (SELECT MAX(length) FROM Track);
+-- 2) Название треков, продолжительность которых не менее 3,5 минут.
+SELECT name FROM Track
+WHERE length >= (3.5*60);
+-- 3) Названия сборников, вышедших в период с 2018 по 2020 год включительно.
+SELECT name FROM Collection c
+WHERE EXTRACT(YEAR FROM year_of_release) BETWEEN 2018 AND 2022;
+-- 4) Исполнители, чьё имя состоит из одного слова.
+SELECT name FROM Performer p 
+WHERE name NOT LIKE ('% %');
+-- 5) Название треков, которые содержат слово «мой» или «my».
+SELECT name FROM Track t
+WHERE LOWER(name) LIKE ('%мой%') OR name LIKE ('%my%');
+
+
+--	ЗАДАНИЕ 3
+
+-- 1) Количество исполнителей в каждом жанре.
+SELECT g.name AS "Жанр", COUNT(s.id_genres) AS "Кол-во исполнителей" 
+FROM S_Perfomer_genres s
+LEFT JOIN Genres g ON s.id_genres = g.id_genres
+GROUP BY g.name
+ORDER BY COUNT(s.id_genres) DESC;
+-- 2) Количество треков, вошедших в альбомы 2019–2020 годов.
+SELECT COUNT(s.id_track) AS "Кол-во трэков"
+FROM S_Collection_track s
+WHERE s.id_collection IN (SELECT id_collection FROM Collection c
+							WHERE EXTRACT(YEAR FROM year_of_release) BETWEEN 2019 AND 2020);
+-- 3) Средняя продолжительность треков по каждому альбому.
+SELECT 
+	COALESCE(c.name, 'НЕ в сборнике') AS "Название сборника",
+	COALESCE(ROUND(AVG(t.length),0), 0) AS "Средняя длина трека"
+FROM S_Collection_track s
+FULL JOIN Collection c ON s.id_collection = c.id_collection
+FULL JOIN Track t ON s.id_track = t.id_track
+GROUP BY c.name
+ORDER BY c.name;
+-- 4) Все исполнители, которые не выпустили альбомы в 2020 году.
+SELECT p.name AS "Performer" FROM S_Performer_album s
+FULL JOIN Performer p ON s.id_performer = p.id_performer
+FULL JOIN album a ON a.id_album = s.id_album
+WHERE EXTRACT(YEAR FROM year_of_release) != 2020
+GROUP BY p.name
+ORDER BY p.name;
+-- 5) Названия сборников, в которых присутствует конкретный исполнитель (выберите его сами).
+SELECT a.name FROM S_Performer_album s
+FULL JOIN Performer p ON s.id_performer = p.id_performer
+FULL JOIN album a ON a.id_album = s.id_album
+WHERE p.name = 'Баста';
+
+
+--ЗАДАНИЕ 4(необязательное)
+
+-- 1) Названия альбомов, в которых присутствуют исполнители более чем одного жанра.
+SELECT a.name FROM S_Performer_album s
+FULL JOIN Performer p ON s.id_performer = p.id_performer
+FULL JOIN album a ON a.id_album = s.id_album
+WHERE p.name IN (SELECT x FROM (SELECT p.name AS x,count(*) FROM S_Perfomer_genres s
+								FULL JOIN Performer p ON s.id_performer = p.id_performer
+								FULL JOIN genres g ON s.id_genres = g.id_genres
+								GROUP BY p.name
+								HAVING count(*)>1));	
+
+-- 2) Наименования треков, которые не входят в сборники.
+SELECT t.name AS "Название трека" FROM S_Collection_track s
+FULL JOIN Collection c ON s.id_collection = c.id_collection
+FULL JOIN Track t ON s.id_track = t.id_track
+WHERE c.name IS NULL;
+-- 3) Исполнитель или исполнители, написавшие самый короткий по продолжительности трек, — теоретически таких треков может быть несколько.
+SELECT p.name FROM S_Performer_album s
+FULL JOIN Performer p ON s.id_performer = p.id_performer
+FULL JOIN track t ON s.id_album = t.id_album
+WHERE t.length IS NOT NULL 
+	AND t.name IS NOT NULL
+	AND p.name IS NOT NULL
+	AND t.length IN(SELECT min(track.length) FROM track);
+
+-- 4) Названия альбомов, содержащих наименьшее количество треков.
+SELECT name FROM album
+WHERE id_album IN(SELECT X FROM (SELECT id_album AS X, COUNT(id_album) AS y FROM track 
+					GROUP BY id_album
+					HAVING COUNT(id_album) = (SELECT min(Z) AS min_count FROM (SELECT id_album, count(id_album) AS Z FROM track GROUP BY id_album))))
+ORDER BY name;
